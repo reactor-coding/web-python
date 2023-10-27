@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>pyodide test</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.17.0/full/pyodide.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+  </head>
+  <body style="text-align: center" >
+    <div id="layout">
+      <h1>Python Editor</h1>
+      <div id="editor">print("Hello World!");</div>
+      <br/>
+      <table id="control_panel" style="width:800px" >
+        <tr>
+          <td rowspan="2">
+            <input class="button" id="runBtn" style="background-color: #4CAF50;" type="button" value="Run Script"/>
+          </td>
+          <td>Load File: 
+          <input type="file" id="loadBtn"/>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <input id="inputFileNameToSaveAs"></input>
+            <input class="button" id="saveasBtn" style="background-color: #728edb;height:30px;" type="button" value="Download" />
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <script>
+      document.querySelector("#loadBtn").addEventListener("change", (e) => {
+        e.preventDefault();
+  
+        const file = files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.addEventListener("load", () => editor.session.setValue(reader.result));
+        reader.readAsText(file);
+      });
+
+      document.querySelector("#runBtn").addEventListener("click", async () => {
+        await loadPyodide({
+          indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.17.0/full/'
+        });
+
+        try {
+          code = editor.getValue();
+          let output = await pyodide.runPythonAsync(code);
+        } catch(e) {
+          console.error(e);
+        }
+      })
+
+      document.querySelector("#saveasBtn", () => {
+        if (!window.URL) return alert("URL APIに未対応");
+
+        const blob = new Blob([editor.getValue()], {type:"text/plain"});
+        const a = document.createElement("a");
+        a.download = document.getElementById("inputFileNameToSaveAs").value;
+        a.href = URL.createObjectURL(blob);
+        a.click();
+      })
+
+      // init Ace Editor
+      const editor = ace.edit("editor");
+      editor.setTheme("ace/theme/twilight");
+      editor.session.setMode("ace/mode/python");
+    </script>
+  </body>
+</html>
